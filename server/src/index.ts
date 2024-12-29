@@ -1,15 +1,28 @@
-import express, { Express, Request, Response } from "express";
-import dotenv from "dotenv";
+import express, { Application } from 'express';
+import cors from 'cors';
+import dotenv from 'dotenv';
+import userRouter from './routers/userRouter';
+import connectDB from './config/db';
 
+// Load environment variables
 dotenv.config();
 
-const app: Express = express();
-const port = process.env.PORT || 3000;
+// Initialize Express application
+const app: Application = express();
+const PORT = process.env.PORT || 5000;
 
-app.get("/", (req: Request, res: Response) => {
-  res.send("Express + TypeScript Server");
-});
+// Connect to MongoDB
+connectDB();
 
-app.listen(port, () => {
-  console.log(`[server]: Server is running at http://localhost:${port}`);
+// Middleware
+app.use(cors());
+app.use(express.json({ limit: '10mb' })); // Increase as needed
+app.use(express.urlencoded({ limit: '10mb', extended: true }));
+
+// Routes
+app.use('/api', userRouter);
+
+// Start the server
+app.listen(PORT, () => {
+    console.log(`Server is running on http://localhost:${PORT}`);
 });

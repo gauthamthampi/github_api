@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { fetchUserDataFromBackend, saveUserDataToBackend, fetchFollowersFromBackend } from '../utils/api.ts';
 
 const Home = () => {
     const [username, setUsername] = useState('');
@@ -14,51 +15,50 @@ const Home = () => {
     const [loading, setLoading] = useState(false);
 
     const fetchUserData = async () => {
-        if (cachedData[username]) {
-            setUserData(cachedData[username].userData);
-            setRepositories(cachedData[username].repositories);
-            return;
-        }
         try {
             setLoading(true);
             setError('');
+    
+            // Fetch user data from GitHub API
             const userRes = await axios.get(`https://api.github.com/users/${username}`);
-            const user = userRes.data;
-
             const repoRes = await axios.get(`https://api.github.com/users/${username}/repos`);
+            
+            const user = userRes.data;
             const repos = repoRes.data;
-
+    
+            // Update state with fetched data
             setUserData(user);
             setRepositories(repos);
-
-            setCachedData((prev) => ({
-                ...prev,
-                [username]: { userData: user, repositories: repos },
-            }));
         } catch (error) {
             setError('Error fetching user data. Please check the username and try again.');
-            console.error('Error fetching user data:', error);
+            console.error('Error fetching user data:', error.response || error.message);
         } finally {
             setLoading(false);
         }
     };
-
+    
+    
     const fetchFollowers = async () => {
-        if (!userData) return;
+        if (!userData || !userData.followers_url) return;
+    
         try {
             setLoading(true);
             setError('');
-            const followersRes = await axios.get(userData.followers_url);
-            const followersData = followersRes.data;
-            setFollowers(followersData);
+    
+            // Fetch followers directly from the GitHub API
+            const response = await axios.get(userData.followers_url);
+    
+            // Update state with the fetched data
+            setFollowers(response.data);
             setShowFollowers(true);
         } catch (error) {
             setError('Error fetching followers.');
-            console.error('Error fetching followers:', error);
+            console.error('Error fetching followers:', error.response || error.message);
         } finally {
             setLoading(false);
         }
     };
+    
 
     return (
         <div style={{ padding: '20px', fontFamily: 'Arial, sans-serif', maxWidth: '800px', margin: '0 auto' }}>
@@ -199,5 +199,5 @@ const Home = () => {
         </div>
     );
 };
-  
+
 export default Home;
